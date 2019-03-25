@@ -11,18 +11,9 @@
  * float switch attached to pin 2 from +5V
  * 10K resistor attached to pin 2 from ground
  
- * Note: on most Arduinos there is already an LED on the board
- attached to pin 13.
  
- 
- created 2005
- by DojoDave <http://www.0j0.org>
- modified 30 Aug 2011
- by Tom Igoe
- 
- This example code is in the public domain.
- 
- http://www.arduino.cc/en/Tutorial/Button
+ https://github.com/WillWelker/arduino-sketches
+ Adapted from the Arduino Button example
  */
 
 
@@ -39,18 +30,22 @@ void setup() {
   pinMode(floatSwitch, INPUT);     
 }
 
+void fill() {
+  // When float switch goes up, wait a while then pump out water
+}
+
 void loop(){
-  // read the state of the pushbutton value:
+  // read the state of the float switch value:
   switchState = digitalRead(floatSwitch);
 
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
   if (switchState == HIGH) {     
-    // turn LED on:    
+    // turn relay and pump on:    
     digitalWrite(relayPin, HIGH);  
   } 
   else {
-    // turn LED off:
+    // turn relay and pum off:
     digitalWrite(relayPin, LOW); 
   }
 }
