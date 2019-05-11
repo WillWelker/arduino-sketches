@@ -1,3 +1,5 @@
+// https://electronicshobbyists.com/controlling-dc-motors-arduino-arduino-l298n-tutorial/
+
 //Joystick Pins
 int x_key = A0;
 int y_key = A1;
