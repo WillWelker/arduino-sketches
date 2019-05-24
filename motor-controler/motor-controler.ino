@@ -1,5 +1,21 @@
-// https://electronicshobbyists.com/controlling-dc-motors-arduino-arduino-l298n-tutorial/
+// Athena's Robot Arm Project
+#include <Wire.h>
 #include <Servo.h>
+
+//Variables for Gyroscope
+int gyro_x, gyro_y, gyro_z;
+long gyro_x_cal, gyro_y_cal, gyro_z_cal;
+boolean set_gyro_angles;
+long acc_x, acc_y, acc_z, acc_total_vector;
+float angle_roll_acc, angle_pitch_acc, angle_yaw_acc;
+float angle_pitch, angle_roll, angle_yaw;
+int angle_pitch_buffer, angle_roll_buffer, angle_yaw_buffer;
+float angle_pitch_output, angle_roll_output, angle_yaw_output;
+int servo_x, servo_y, servo_z, servo_yz;
+// Setup timers and temp variables
+//long loop_timer;
+int temp;
+
 // Servo pin
 Servo clawServo;
 int servoPos;
@@ -37,6 +53,26 @@ int baseSpeed;
 int shouldSpeed;
 int elbowSpeed;
 void setup ( ) {
+  Wire.begin();
+  //Setup the registers of the MPU-6050
+  setup_mpu_6050_registers();
+  //Read the raw acc and gyro data from the MPU-6050 1000 times
+  for (int cal_int = 0; cal_int < 1000 ; cal_int ++) {
+    read_mpu_6050_data();
+    //Add the gyro x offset to the gyro_x_cal variable
+    gyro_x_cal += gyro_x;
+    //Add the gyro y offset to the gyro_y_cal variable
+    gyro_y_cal += gyro_y;
+    //Add the gyro z offset to the gyro_z_cal variable
+    gyro_z_cal += gyro_z;
+    //Delay 3us to have 250Hz for-loop
+    delay(3);
+  }
+  // Divide all results by 1000 to get average offset
+  gyro_x_cal /= 1000;
+  gyro_y_cal /= 1000;
+  gyro_z_cal /= 1000;
+  
   Serial.begin (9600); //Starting the serial communication at 9600 baud rate
   //Initialize the servo pin
   clawServo.attach(28);
@@ -51,10 +87,6 @@ void setup ( ) {
   pinMode(basePin1, OUTPUT);
   pinMode(basePin2, OUTPUT);
 
-
-
-
-
   //Initializng the pot pins as input
   pinMode (pot_0, INPUT) ;
   pinMode (pot_1, INPUT) ;
@@ -64,7 +96,13 @@ void setup ( ) {
   pinMode (pot_6, INPUT) ;
 }
 void loop () {
-
+  // Get data from MPU-6050
+  read_mpu_6050_data();
+  //Subtract the offset values from the raw gyro values
+  gyro_x -= gyro_x_cal;
+  gyro_y -= gyro_y_cal;
+  gyro_z -= gyro_z_cal;
+  
   hand_pos = analogRead (pot_0) ;  //Reading input value
   // Claw Servo
   servoPos = map(hand_pos, 0, 1024, 0, 170);
@@ -117,4 +155,69 @@ void loop () {
   // MOTOR 2
 
 
+}
+
+// MCU setup functions
+void setup_mpu_6050_registers() {
+
+  //Activate the MPU-6050
+
+  //Start communicating with the MPU-6050
+  Wire.beginTransmission(0x68);
+  //Send the requested starting register
+  Wire.write(0x6B);
+  //Set the requested starting register
+  Wire.write(0x00);
+  //End the transmission
+  Wire.endTransmission();
+
+  //Configure the accelerometer (+/-8g)
+
+  //Start communicating with the MPU-6050
+  Wire.beginTransmission(0x68);
+  //Send the requested starting register
+  Wire.write(0x1C);
+  //Set the requested starting register
+  Wire.write(0x10);
+  //End the transmission
+  Wire.endTransmission();
+
+  //Configure the gyro (500dps full scale)
+
+  //Start communicating with the MPU-6050
+  Wire.beginTransmission(0x68);
+  //Send the requested starting register
+  Wire.write(0x1B);
+  //Set the requested starting register
+  Wire.write(0x08);
+  //End the transmission
+  Wire.endTransmission();
+
+}
+
+
+void read_mpu_6050_data() {
+
+  //Read the raw gyro and accelerometer data
+
+  //Start communicating with the MPU-6050
+  Wire.beginTransmission(0x68);
+  //Send the requested starting register
+  Wire.write(0x3B);
+  //End the transmission
+  Wire.endTransmission();
+  //Request 14 bytes from the MPU-6050
+  Wire.requestFrom(0x68, 14);
+  //Wait until all the bytes are received
+  while (Wire.available() < 14);
+
+  //Following statements left shift 8 bits, then bitwise OR.
+  //Turns two 8-bit values into one 16-bit value
+  acc_x = Wire.read() << 8 | Wire.read();
+  acc_y = Wire.read() << 8 | Wire.read();
+  acc_z = Wire.read() << 8 | Wire.read();
+  temp = Wire.read() << 8 | Wire.read();
+  gyro_x = Wire.read() << 8 | Wire.read();
+  gyro_y = Wire.read() << 8 | Wire.read();
+  gyro_z = Wire.read() << 8 | Wire.read();
 }
