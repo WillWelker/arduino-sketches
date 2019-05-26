@@ -168,7 +168,7 @@ void loop () {
     angle_pitch_output = angle_pitch_output * 0.9 + angle_pitch * 0.1;
     angle_roll_output = angle_roll_output * 0.9 + angle_roll * 0.1;
     angle_yaw_output = angle_yaw_output * 0.9 + angle_yaw * 0.1;
-    //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+    
 
     // Print to Serial Monitor
 
@@ -317,12 +317,15 @@ void loop () {
     }
 
 
-
+    //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
     // The MPU 6050 produces new data at 250HZ
     // So we pause until enough microseconds have passed
     while (micros() - loop_timer < 4000);
     //Reset the loop timer
     loop_timer = micros();
+  }else{
+    //reset to MPU angles
+    set_gyro_angles = false;
   }
 }
 // ***End of Loop *** //
